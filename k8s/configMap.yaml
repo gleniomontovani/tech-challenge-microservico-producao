@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: tech-challenge-microservico-producao-config
+  labels:
+    app: tech-challenge-microservico-producao
+data:
+  DATASOURCE_DB: producao
+  DATASOURCE_USERNAME: postgres
