@@ -1,5 +1,6 @@
 package br.com.postech.techchallenge.microservico.producao.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.postech.techchallenge.microservico.producao.configuration.ModelMapperConfiguration;
 import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
+import br.com.postech.techchallenge.microservico.producao.enums.StatusPedidoEnum;
 import br.com.postech.techchallenge.microservico.producao.exception.BusinessException;
 import br.com.postech.techchallenge.microservico.producao.model.request.ProducaoRequest;
 import br.com.postech.techchallenge.microservico.producao.model.response.ProducaoResponse;
@@ -16,6 +18,7 @@ import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRep
 import br.com.postech.techchallenge.microservico.producao.service.ProducaoService;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.ApiMicroServicePedido;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.request.PedidoRequest;
+import br.com.postech.techchallenge.microservico.producao.service.integracao.response.PedidoResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -55,22 +58,46 @@ public class ProducaoServiceImpl implements ProducaoService{
 		
 		producao.setSituacaoProducao(SituacaoProducaoEnum.get(producaoRequest.situacaoProducao()));
 		producao.setObservacao(producaoRequest.observacao());
+		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
+		producao.setDataFimPreparo(obterDataFimPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		
-		Integer statusPedido = producaoRequest.situacaoProducao() == 3 ? 5 : 4;
+		Integer statusPedido = obterStatusPedido(producaoRequest.situacaoProducao());
+		
 		
 		producao = producaoRepository.save(producao);
-		apiMicroServicePedido.atualizarPedido(new PedidoRequest(producao.getNumeroPedido(), statusPedido));
+		PedidoResponse response = apiMicroServicePedido.atualizarPedido(new PedidoRequest(producao.getNumeroPedido(), statusPedido));
+		var producaoResponse = MAPPER.map(producao, ProducaoResponse.class);
+		producaoResponse.setStatusPedido(StatusPedidoEnum.get(response.getStatusPedido()).getDescricao());
 		
-		return MAPPER.map(producao, ProducaoResponse.class);
+		return producaoResponse;
 	}
 
 	@Override
 	public ProducaoResponse salvarProducaoPedido(ProducaoRequest producaoRequest) throws BusinessException {
 		var producao = MAPPER.map(producaoRequest, Producao.class);
 		producao.setSituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
+		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		
 		producao = producaoRepository.save(producao);
 		
 		return MAPPER.map(producao, ProducaoResponse.class);
+	}
+	
+	private LocalDateTime obterDataInicioPreparoProducao(Producao producao, Integer situacao) {
+		return SituacaoProducaoEnum.get(situacao).equals(SituacaoProducaoEnum.EM_PREPARACAO) 
+				? LocalDateTime.now()
+				: producao.getDataInicioPreparo();
+	}
+	
+	private LocalDateTime obterDataFimPreparoProducao(Producao producao, Integer situacao) {
+		return SituacaoProducaoEnum.get(situacao).equals(SituacaoProducaoEnum.PRONTO)  
+				? LocalDateTime.now() 
+				: null;
+	}
+	
+	private Integer obterStatusPedido(Integer situacao) {
+		return SituacaoProducaoEnum.get(situacao).equals(SituacaoProducaoEnum.PRONTO) 
+				? StatusPedidoEnum.PRONTO.getValue() 
+				: StatusPedidoEnum.EM_PREPARACAO.getValue();
 	}
 }

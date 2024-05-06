@@ -14,7 +14,7 @@ public class ProducaoResponse {
 	private Long id;
 	private Long numeroPedido;
 	private String observacao;
-	private Integer statusPedido;
+	private String statusPedido;
 	private String dataInicioPreparo;
 	private String dataFimPreparo;
 }
