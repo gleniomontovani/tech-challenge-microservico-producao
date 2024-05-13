@@ -8,6 +8,7 @@ import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 
 import br.com.postech.techchallenge.microservico.producao.configuration.ModelMapperConfiguration;
+import br.com.postech.techchallenge.microservico.producao.converts.SituacaoProducaoParaStringConverter;
 import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
 import br.com.postech.techchallenge.microservico.producao.enums.StatusPedidoEnum;
@@ -35,6 +36,10 @@ public class ProducaoServiceImpl implements ProducaoService{
 		List<Producao> producoesPorSituacao = producaoRepository
 				.findBySituacaoProducao(SituacaoProducaoEnum.get(situacao));
 		
+		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
+				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
+						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
+		
 		
 		return MAPPER.map(producoesPorSituacao, new TypeToken<List<ProducaoResponse>>() {
 		}.getType());
@@ -46,6 +51,9 @@ public class ProducaoServiceImpl implements ProducaoService{
 				.findByNumeroPedido(numeroPedido)
 				.orElseThrow(() -> new BusinessException("Pedido não encontrado!"));
 		
+		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
+				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
+						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
 		
 		return MAPPER.map(producao, ProducaoResponse.class);
 	}
@@ -79,6 +87,10 @@ public class ProducaoServiceImpl implements ProducaoService{
 		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		
 		producao = producaoRepository.save(producao);
+		
+		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
+				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
+						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
 		
 		return MAPPER.map(producao, ProducaoResponse.class);
 	}

@@ -39,7 +39,7 @@ public class ProducaoController {
 	
 	@PostMapping(consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
 	public ResponseEntity<ProducaoResponse> salvarProducaoPedido(@RequestBody @Valid ProducaoRequest producaoRequest){	
-		return new ResponseEntity<>(producaoService.salvarProducaoPedido(producaoRequest), HttpStatus.OK);
+		return new ResponseEntity<>(producaoService.salvarProducaoPedido(producaoRequest), HttpStatus.CREATED);
 	}
 	
 	@PutMapping(consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
