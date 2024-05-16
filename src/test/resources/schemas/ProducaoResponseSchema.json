@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "required": [
+        "id",
+        "numeroPedido",
+        "observacao",
+        "statusPedido",
+        "dataInicioPreparo",
+        "dataFimPreparo"
+    ],
+    "properties": {
+        "id": {
+            "type": "integer"
+        },
+        "numeroPedido": {
+            "type": "integer"
+        },
+        "observacao": {
+            "type": [ "string", "null" ]
+        },
+        "statusPedido": {
+            "type": [ "string", "null" ]
+        },
+        "dataInicioPreparo": {
+            "type": [ "string", "null" ]
+        },
+        "dataFimPreparo": {
+            "type": [ "string", "null" ]
+        }
+    }
+}

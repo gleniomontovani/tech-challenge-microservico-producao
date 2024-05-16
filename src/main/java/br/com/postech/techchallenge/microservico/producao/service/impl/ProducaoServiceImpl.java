@@ -66,7 +66,6 @@ public class ProducaoServiceImpl implements ProducaoService{
 		
 		producao.setSituacaoProducao(SituacaoProducaoEnum.get(producaoRequest.situacaoProducao()));
 		producao.setObservacao(producaoRequest.observacao());
-		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		producao.setDataFimPreparo(obterDataFimPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		
 		Integer statusPedido = obterStatusPedido(producaoRequest.situacaoProducao());
@@ -82,6 +81,10 @@ public class ProducaoServiceImpl implements ProducaoService{
 
 	@Override
 	public ProducaoResponse salvarProducaoPedido(ProducaoRequest producaoRequest) throws BusinessException {
+		producaoRepository
+			.findByNumeroPedido(producaoRequest.numeroPedido())
+			.ifPresent(producao -> {throw new BusinessException("Pedido já existe!");});
+		
 		var producao = MAPPER.map(producaoRequest, Producao.class);
 		producao.setSituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
 		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
