@@ -1,4 +1,4 @@
-package br.com.postech.techchallenge.microservico.producao.service;
+package br.com.postech.techchallenge.microservico.producao.unit.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 
 import br.com.postech.techchallenge.microservico.producao.model.response.ProducaoResponse;
 import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRepository;
+import br.com.postech.techchallenge.microservico.producao.service.ProducaoService;
 import br.com.postech.techchallenge.microservico.producao.service.impl.ProducaoServiceImpl;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.ApiMicroServicePedido;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.response.PedidoResponse;

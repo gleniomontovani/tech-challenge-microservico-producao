@@ -1,4 +1,4 @@
-package br.com.postech.techchallenge.microservico.producao.controller;
+package br.com.postech.techchallenge.microservico.producao.unit.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import br.com.postech.techchallenge.microservico.producao.controller.ProducaoController;
 import br.com.postech.techchallenge.microservico.producao.handler.RestHandlerException;
 import br.com.postech.techchallenge.microservico.producao.model.request.ProducaoRequest;
 import br.com.postech.techchallenge.microservico.producao.model.response.ProducaoResponse;

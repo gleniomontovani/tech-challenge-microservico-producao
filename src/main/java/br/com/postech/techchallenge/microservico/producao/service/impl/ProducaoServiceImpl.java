@@ -2,6 +2,7 @@ package br.com.postech.techchallenge.microservico.producao.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -81,21 +82,23 @@ public class ProducaoServiceImpl implements ProducaoService{
 
 	@Override
 	public ProducaoResponse salvarProducaoPedido(ProducaoRequest producaoRequest) throws BusinessException {
-		producaoRepository
+		var producaoEntity = producaoRepository
 			.findByNumeroPedido(producaoRequest.numeroPedido())
-			.ifPresent(producao -> {throw new BusinessException("Pedido já existe!");});
+			.orElse(null);
 		
-		var producao = MAPPER.map(producaoRequest, Producao.class);
-		producao.setSituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
-		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
-		
-		producao = producaoRepository.save(producao);
+		if(Objects.isNull(producaoEntity)) {
+			var producao = MAPPER.map(producaoRequest, Producao.class);
+			producao.setSituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
+			producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
+			
+			producaoEntity = producaoRepository.save(producao);
+		}
 		
 		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
 				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
 						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
 		
-		return MAPPER.map(producao, ProducaoResponse.class);
+		return MAPPER.map(producaoEntity, ProducaoResponse.class);
 	}
 	
 	private LocalDateTime obterDataInicioPreparoProducao(Producao producao, Integer situacao) {

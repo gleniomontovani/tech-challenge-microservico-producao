@@ -1,4 +1,4 @@
-package br.com.postech.techchallenge.microservico.producao.repository;
+package br.com.postech.techchallenge.microservico.producao.unit.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 
 import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRepository;
 import br.com.postech.techchallenge.microservico.producao.util.ObjectCreatorHelper;
 
 class ProducaoRepositoryTest {
