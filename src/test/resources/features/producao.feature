@@ -7,6 +7,7 @@ Funcionalidade: API Microserviço de Produção
 		Então a produção é registrada com sucesso
 		
 	Cenário: Buscar uma produção por número de pedido
+		Dado que uma produção já foi cadastrada
 		Quando requisitar a busca da produção
 		Então a produção é exibida com sucesso
 		

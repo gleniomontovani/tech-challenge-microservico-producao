@@ -32,14 +32,16 @@ public class StepDefinitionProducao {
 	// - Salvar Produção
 	// - ###################################################
 	@Quando("submeter uma nova produção")
-	public void submeter_uma_nova_produção() {
+	public ProducaoResponse submeter_uma_nova_produção() {
 		var producaoRequest = ObjectCreatorHelper.obterProducaoRequest();
 		
 		response = given()
 				.contentType(MediaType.APPLICATION_JSON_VALUE)
 				.body(producaoRequest)
 				.when()
-				.post(ControllerMappingConfig.ENDPOINT_MICRO_SERVICE_PRODUCAO_LOCAL);						
+				.post(ControllerMappingConfig.ENDPOINT_MICRO_SERVICE_PRODUCAO_LOCAL);		
+		
+		return response.then().extract().as(ProducaoResponse.class);
 	}
 	
 	@Então("a produção é registrada com sucesso")
@@ -47,22 +49,22 @@ public class StepDefinitionProducao {
 		response.then()
 	        .statusCode(HttpStatus.CREATED.value())
 	        .body(matchesJsonSchemaInClasspath("./schemas/ProducaoResponseSchema.json"));
-		
-		var producao = response.then().extract().as(ProducaoResponse.class);
-		System.setProperty("numeroPedido", producao.getNumeroPedido().toString());
 	}
 		
 	// - ###################################################
 	// - Buscar produção por pedido
 	// - ###################################################
+	@Dado("que uma produção já foi cadastrada")
+	public void que_uma_produção_já_foi_cadastrada() {
+		this.producaoResponse = submeter_uma_nova_produção();
+	}
+	
 	@Quando("requisitar a busca da produção")
-	public ProducaoResponse requisitar_a_busca_da_produção() {
+	public void requisitar_a_busca_da_produção() {
 		response = given()
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .when()
-                .get(ControllerMappingConfig.ENDPOINT_MICRO_SERVICE_PRODUCAO_LOCAL+"/{numeroPedido}", System.getProperty("numeroPedido"));
-		
-		return response.then().extract().as(ProducaoResponse.class);
+                .get(ControllerMappingConfig.ENDPOINT_MICRO_SERVICE_PRODUCAO_LOCAL+"/{numeroPedido}", producaoResponse.getNumeroPedido());
 	}
 	
 	@Então("a produção é exibida com sucesso")
@@ -95,11 +97,6 @@ public class StepDefinitionProducao {
 	// - ###################################################
 	// - Atualizar produção
 	// - ###################################################
-	@Dado("que uma produção já foi cadastrada")
-	public void que_uma_produção_já_foi_cadastrada() {
-		this.producaoResponse = requisitar_a_busca_da_produção();
-	}
-
 	@Quando("requisitar a alteração do status da produção")
 	public void requisitar_a_alteração_do_status_da_produção() {
 		var producaoRequest = new ProducaoRequest(

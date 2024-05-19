@@ -67,6 +67,7 @@ public class ProducaoServiceImpl implements ProducaoService{
 		
 		producao.setSituacaoProducao(SituacaoProducaoEnum.get(producaoRequest.situacaoProducao()));
 		producao.setObservacao(producaoRequest.observacao());
+		producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		producao.setDataFimPreparo(obterDataFimPreparoProducao(producao, producaoRequest.situacaoProducao()));
 		
 		Integer statusPedido = obterStatusPedido(producaoRequest.situacaoProducao());

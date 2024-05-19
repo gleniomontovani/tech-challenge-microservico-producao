@@ -14,5 +14,4 @@ public interface ProducaoRepository extends JpaRepository<Producao, Long>{
 
 	List<Producao> findBySituacaoProducao(SituacaoProducaoEnum situacaoProducao);
 	Optional<Producao> findByNumeroPedido(Long numeroPedido);
-	//Optional<Producao> findFirstByNumeroPedidoOrderByIdDesc(Long numeroPedido);
 }
