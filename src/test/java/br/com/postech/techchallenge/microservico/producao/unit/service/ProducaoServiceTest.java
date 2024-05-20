@@ -17,7 +17,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import br.com.postech.techchallenge.microservico.producao.model.response.ProducaoResponse;
-import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRepository;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoJpaRepository;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoMongoRepository;
 import br.com.postech.techchallenge.microservico.producao.service.ProducaoService;
 import br.com.postech.techchallenge.microservico.producao.service.impl.ProducaoServiceImpl;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.ApiMicroServicePedido;
@@ -28,7 +29,9 @@ class ProducaoServiceTest {
 	
 	private ProducaoService producaoService;
 	@Mock
-	private ProducaoRepository producaoRepository;
+	private ProducaoJpaRepository producaoJpaRepository;
+	@Mock
+	private ProducaoMongoRepository producaoMongoRepository;
 	@Mock
 	private ApiMicroServicePedido apiMicroServicePedido;
 	
@@ -37,7 +40,7 @@ class ProducaoServiceTest {
 	@BeforeEach
 	void setUp() {
 		openMocks = MockitoAnnotations.openMocks(this);
-		producaoService = new ProducaoServiceImpl(producaoRepository, apiMicroServicePedido);
+		producaoService = new ProducaoServiceImpl(producaoJpaRepository, producaoMongoRepository, apiMicroServicePedido);
 	}
 	
 	@AfterEach
@@ -55,7 +58,7 @@ class ProducaoServiceTest {
 		
 		var producoes = Arrays.asList(producaoModel1, producaoModel2);
 		
-		when(producaoRepository.findBySituacaoProducao(any())).thenReturn(producoes);
+		when(producaoJpaRepository.findBySituacaoProducao(any())).thenReturn(producoes);
 		
 		var producaosResponse = producaoService.listarTodasProducaoPorSituacao(1);
 		
@@ -68,7 +71,7 @@ class ProducaoServiceTest {
 				assertThat(producao).isInstanceOf(ProducaoResponse.class);
 			});
 		
-		verify(producaoRepository, times(1)).findBySituacaoProducao(any());
+		verify(producaoJpaRepository, times(1)).findBySituacaoProducao(any());
 	}
 
 	@Test
@@ -76,7 +79,7 @@ class ProducaoServiceTest {
 		var producaoModel = ObjectCreatorHelper.obterProducao();
 		producaoModel.setId(1L);
 		
-		when(producaoRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producaoModel));
+		when(producaoJpaRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producaoModel));
 		
 		var produtoResponse = producaoService.buscarProducaoPorNumeroPedido(1L);
 		
@@ -87,7 +90,7 @@ class ProducaoServiceTest {
 		assertThat(produtoResponse).extracting(ProducaoResponse::getDataInicioPreparo).isEqualTo(producaoModel.getDataInicioPreparo().toString());
 		assertThat(produtoResponse).extracting(ProducaoResponse::getStatusPedido).isEqualTo(producaoModel.getSituacaoProducao().getDescricao());
 		
-		verify(producaoRepository, times(1)).findByNumeroPedido(anyLong());
+		verify(producaoJpaRepository, times(1)).findByNumeroPedido(anyLong());
 	}
 
 	@Test
@@ -97,7 +100,7 @@ class ProducaoServiceTest {
 		
 		var producaoRequest = ObjectCreatorHelper.obterProducaoRequest();		
 		
-		when(producaoRepository.save(any())).thenReturn(producaoModel);
+		when(producaoJpaRepository.save(any())).thenReturn(producaoModel);
 		
 		var produtoResponse = producaoService.salvarProducaoPedido(producaoRequest);
 		
@@ -108,7 +111,7 @@ class ProducaoServiceTest {
 		assertThat(produtoResponse).extracting(ProducaoResponse::getDataInicioPreparo).isEqualTo(producaoModel.getDataInicioPreparo().toString());
 		assertThat(produtoResponse).extracting(ProducaoResponse::getStatusPedido).isEqualTo(producaoModel.getSituacaoProducao().getDescricao());
 				
-		verify(producaoRepository, times(1)).save(any());
+		verify(producaoJpaRepository, times(1)).save(any());
 	}
 
 	@Test
@@ -118,9 +121,9 @@ class ProducaoServiceTest {
 		
 		var producaoRequest = ObjectCreatorHelper.obterProducaoRequest();
 		
-		when(producaoRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producaoModel));
+		when(producaoJpaRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producaoModel));
 		when(apiMicroServicePedido.atualizarPedido(any())).thenReturn(PedidoResponse.builder().build());
-		when(producaoRepository.save(any())).thenReturn(producaoModel);
+		when(producaoJpaRepository.save(any())).thenReturn(producaoModel);
 		
 		var produtoResponse = producaoService.atualizarStatusProducao(producaoRequest);
 		
@@ -130,8 +133,8 @@ class ProducaoServiceTest {
 		assertThat(produtoResponse).extracting(ProducaoResponse::getObservacao).isEqualTo(producaoModel.getObservacao());
 		assertThat(produtoResponse).extracting(ProducaoResponse::getDataInicioPreparo).isEqualTo(producaoModel.getDataInicioPreparo().toString());
 
-		verify(producaoRepository, times(1)).findByNumeroPedido(anyLong());
+		verify(producaoJpaRepository, times(1)).findByNumeroPedido(anyLong());
 		verify(apiMicroServicePedido, times(1)).atualizarPedido(any());
-		verify(producaoRepository, times(1)).save(any());
+		verify(producaoJpaRepository, times(1)).save(any());
 	}
 }

@@ -18,13 +18,13 @@ import org.mockito.MockitoAnnotations;
 
 import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
-import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRepository;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoJpaRepository;
 import br.com.postech.techchallenge.microservico.producao.util.ObjectCreatorHelper;
 
 class ProducaoRepositoryTest {
 	
 	@Mock
-	private ProducaoRepository producaoRepository;
+	private ProducaoJpaRepository producaoJpaRepository;
 	
 	AutoCloseable openMocks;
 	
@@ -48,13 +48,13 @@ class ProducaoRepositoryTest {
 		
 		var producoes = Arrays.asList(producaoModel1, producaoModel2);
 		
-		when(producaoRepository.findBySituacaoProducao(any())).thenReturn(producoes);
+		when(producaoJpaRepository.findBySituacaoProducao(any())).thenReturn(producoes);
 		
-		var lista = producaoRepository.findBySituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
+		var lista = producaoJpaRepository.findBySituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
 		
 		assertThat(lista).hasSize(2).containsExactlyInAnyOrder(producaoModel1, producaoModel2);
 		
-		verify(producaoRepository, times(1)).findBySituacaoProducao(any());		
+		verify(producaoJpaRepository, times(1)).findBySituacaoProducao(any());		
 	}
 
 	@Test
@@ -62,9 +62,9 @@ class ProducaoRepositoryTest {
 		var producao = ObjectCreatorHelper.obterProducao();
 		producao.setId(1L);
 		
-		when(producaoRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producao));
+		when(producaoJpaRepository.findByNumeroPedido(anyLong())).thenReturn(Optional.of(producao));
 		
-		var producaoOptional = producaoRepository.findByNumeroPedido(1L);
+		var producaoOptional = producaoJpaRepository.findByNumeroPedido(1L);
 		
 		assertThat(producaoOptional).isPresent().containsSame(producao);
 		
@@ -77,7 +77,7 @@ class ProducaoRepositoryTest {
 			assertThat(producaoEncontrado.getSituacaoProducao()).isEqualTo(producao.getSituacaoProducao());
 		});
 				
-		verify(producaoRepository, times(1)).findByNumeroPedido(anyLong());
+		verify(producaoJpaRepository, times(1)).findByNumeroPedido(anyLong());
 	}
 	
 	@Test
@@ -85,9 +85,9 @@ class ProducaoRepositoryTest {
 		var producao = ObjectCreatorHelper.obterProducao();
 		producao.setId(1L);
 		
-		when(producaoRepository.findById(anyLong())).thenReturn(Optional.of(producao));
+		when(producaoJpaRepository.findById(anyLong())).thenReturn(Optional.of(producao));
 		
-		var producaoOptional = producaoRepository.findById(1L);
+		var producaoOptional = producaoJpaRepository.findById(1L);
 		
 		assertThat(producaoOptional).isPresent().containsSame(producao);
 		
@@ -100,7 +100,7 @@ class ProducaoRepositoryTest {
 			assertThat(producaoEncontrado.getSituacaoProducao()).isEqualTo(producao.getSituacaoProducao());
 		});
 				
-		verify(producaoRepository, times(1)).findById(anyLong());
+		verify(producaoJpaRepository, times(1)).findById(anyLong());
 	}
 
 	@Test
@@ -108,9 +108,9 @@ class ProducaoRepositoryTest {
 		var producao = ObjectCreatorHelper.obterProducao();
 		producao.setId(1L);
 		
-		when(producaoRepository.save(any())).thenReturn(producao);
+		when(producaoJpaRepository.save(any())).thenReturn(producao);
 		
-		var producaoSalvo = producaoRepository.save(producao);
+		var producaoSalvo = producaoJpaRepository.save(producao);
 		
 		assertThat(producaoSalvo).isInstanceOf(Producao.class).isNotNull().isEqualTo(producao);
 		assertThat(producaoSalvo).extracting(Producao::getId).isEqualTo(producao.getId());
@@ -119,6 +119,6 @@ class ProducaoRepositoryTest {
 		assertThat(producaoSalvo).extracting(Producao::getObservacao).isNotNull();
 		assertThat(producaoSalvo).extracting(Producao::getSituacaoProducao).isEqualTo(producao.getSituacaoProducao());
 		
-		verify(producaoRepository, times(1)).save(any());
+		verify(producaoJpaRepository, times(1)).save(any());
 	}
 }

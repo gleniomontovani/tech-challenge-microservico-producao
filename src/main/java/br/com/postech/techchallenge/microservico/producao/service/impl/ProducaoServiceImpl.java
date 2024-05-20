@@ -10,13 +10,15 @@ import org.springframework.stereotype.Service;
 
 import br.com.postech.techchallenge.microservico.producao.configuration.ModelMapperConfiguration;
 import br.com.postech.techchallenge.microservico.producao.converts.SituacaoProducaoParaStringConverter;
+import br.com.postech.techchallenge.microservico.producao.domain.ProducaoDocumento;
 import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
 import br.com.postech.techchallenge.microservico.producao.enums.StatusPedidoEnum;
 import br.com.postech.techchallenge.microservico.producao.exception.BusinessException;
 import br.com.postech.techchallenge.microservico.producao.model.request.ProducaoRequest;
 import br.com.postech.techchallenge.microservico.producao.model.response.ProducaoResponse;
-import br.com.postech.techchallenge.microservico.producao.repository.ProducaoRepository;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoJpaRepository;
+import br.com.postech.techchallenge.microservico.producao.repository.ProducaoMongoRepository;
 import br.com.postech.techchallenge.microservico.producao.service.ProducaoService;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.ApiMicroServicePedido;
 import br.com.postech.techchallenge.microservico.producao.service.integracao.request.PedidoRequest;
@@ -29,12 +31,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProducaoServiceImpl implements ProducaoService{
 	private static final ModelMapper MAPPER = ModelMapperConfiguration.getModelMapper();
-	private final ProducaoRepository producaoRepository;
+	private final ProducaoJpaRepository producaoJpaRepository;
+	private final ProducaoMongoRepository producaoMongoRepository;
 	private final ApiMicroServicePedido apiMicroServicePedido;
 
 	@Override
 	public List<ProducaoResponse> listarTodasProducaoPorSituacao(Integer situacao) throws BusinessException {
-		List<Producao> producoesPorSituacao = producaoRepository
+		List<Producao> producoesPorSituacao = producaoJpaRepository
 				.findBySituacaoProducao(SituacaoProducaoEnum.get(situacao));
 		
 		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
@@ -48,20 +51,26 @@ public class ProducaoServiceImpl implements ProducaoService{
 
 	@Override
 	public ProducaoResponse buscarProducaoPorNumeroPedido(Long numeroPedido) throws BusinessException {
-		var producao = producaoRepository
-				.findByNumeroPedido(numeroPedido)
-				.orElseThrow(() -> new BusinessException("Pedido não encontrado!"));
+		var producaoDocumento = producaoMongoRepository.findByNumeroPedido(numeroPedido);
 		
-		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
-				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
-						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
+		if (!producaoDocumento.isPresent()) {
+			var producao = producaoJpaRepository
+					.findByNumeroPedido(numeroPedido)
+					.orElseThrow(() -> new BusinessException("Pedido não encontrado!"));
+			
+			MAPPER.typeMap(Producao.class, ProducaoResponse.class)
+					.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
+							.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
+			
+			return MAPPER.map(producao, ProducaoResponse.class);		
+		}
 		
-		return MAPPER.map(producao, ProducaoResponse.class);
+		return MAPPER.map(producaoDocumento, ProducaoResponse.class);
 	}
 
 	@Override
 	public ProducaoResponse atualizarStatusProducao(ProducaoRequest producaoRequest) throws BusinessException {
-		var producao = producaoRepository
+		var producao = producaoJpaRepository
 				.findByNumeroPedido(producaoRequest.numeroPedido())
 				.orElseThrow(() -> new BusinessException("Pedido não encontrado!"));
 		
@@ -73,17 +82,20 @@ public class ProducaoServiceImpl implements ProducaoService{
 		Integer statusPedido = obterStatusPedido(producaoRequest.situacaoProducao());
 		
 		
-		producao = producaoRepository.save(producao);
+		producao = producaoJpaRepository.save(producao);
 		PedidoResponse response = apiMicroServicePedido.atualizarPedido(new PedidoRequest(producao.getNumeroPedido(), statusPedido));
 		var producaoResponse = MAPPER.map(producao, ProducaoResponse.class);
 		producaoResponse.setStatusPedido(StatusPedidoEnum.get(response.getStatusPedido()).getDescricao());
+		
+		var producaoDocumento = MAPPER.map(producaoResponse, ProducaoDocumento.class);
+		producaoMongoRepository.save(producaoDocumento);
 		
 		return producaoResponse;
 	}
 
 	@Override
 	public ProducaoResponse salvarProducaoPedido(ProducaoRequest producaoRequest) throws BusinessException {
-		var producaoEntity = producaoRepository
+		var producaoEntity = producaoJpaRepository
 			.findByNumeroPedido(producaoRequest.numeroPedido())
 			.orElse(null);
 		
@@ -92,14 +104,19 @@ public class ProducaoServiceImpl implements ProducaoService{
 			producao.setSituacaoProducao(SituacaoProducaoEnum.RECEBIDO);
 			producao.setDataInicioPreparo(obterDataInicioPreparoProducao(producao, producaoRequest.situacaoProducao()));
 			
-			producaoEntity = producaoRepository.save(producao);
+			producaoEntity = producaoJpaRepository.save(producao);
 		}
 		
 		MAPPER.typeMap(Producao.class, ProducaoResponse.class)
 				.addMappings(mapperA -> mapperA.using(new SituacaoProducaoParaStringConverter())
 						.map(Producao::getSituacaoProducao, ProducaoResponse::setStatusPedido));
 		
-		return MAPPER.map(producaoEntity, ProducaoResponse.class);
+		var producaoResponse = MAPPER.map(producaoEntity, ProducaoResponse.class);
+		var producaoDocumento = MAPPER.map(producaoResponse, ProducaoDocumento.class);
+		
+		producaoMongoRepository.save(producaoDocumento);
+		
+		return producaoResponse;
 	}
 	
 	private LocalDateTime obterDataInicioPreparoProducao(Producao producao, Integer situacao) {

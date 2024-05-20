@@ -10,7 +10,7 @@ import br.com.postech.techchallenge.microservico.producao.entity.Producao;
 import br.com.postech.techchallenge.microservico.producao.enums.SituacaoProducaoEnum;
 
 @Repository
-public interface ProducaoRepository extends JpaRepository<Producao, Long>{
+public interface ProducaoJpaRepository extends JpaRepository<Producao, Long>{
 
 	List<Producao> findBySituacaoProducao(SituacaoProducaoEnum situacaoProducao);
 	Optional<Producao> findByNumeroPedido(Long numeroPedido);
